@@ -22,7 +22,7 @@ func TestImportCSV(t *testing.T) {
 	var testPairs []testCase
 
 	testPairs = append(testPairs, testCase{"First Entry", 0, 98415, 86712})
-	testPairs = append(testPairs, testCase{"Some where in the middle", 200, 12172, 39516})
+	testPairs = append(testPairs, testCase{"Somewhere in the middle", 200, 12172, 39516})
 	testPairs = append(testPairs, testCase{"Bottom Third", 666, 63810, 76750})
 	testPairs = append(testPairs, testCase{"Bottom", 999, 83205, 39489})
 
