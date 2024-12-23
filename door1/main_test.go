@@ -2,21 +2,17 @@ package main
 
 import "testing"
 
-var cachedCsv [][]int
-
-func findByIndex(ind int) []int {
-	if len(cachedCsv) == 0 {
-		cachedCsv, _ = importCSV2Ints("input.csv")
-	}
-
-	return cachedCsv[ind]
-}
-
 func TestImportCSV(t *testing.T) {
 	type testCase struct {
 		name string
 		ind  int
 		a, b int
+	}
+
+	csv, e := importCsvToArray("input.csv")
+	if e != nil {
+		t.Errorf("Failed to inport from input file.")
+		t.FailNow()
 	}
 
 	var testPairs []testCase
@@ -28,7 +24,7 @@ func TestImportCSV(t *testing.T) {
 
 	for _, tt := range testPairs {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := findByIndex(tt.ind); got[0] != tt.a || got[1] != tt.b {
+			if got := csv[tt.ind]; got[0] != tt.a || got[1] != tt.b {
 				t.Errorf("At index %d found value pair [%d, %d]; Expected [%d, %d]", tt.ind, got[0], got[1], tt.a, tt.b)
 			}
 		})
