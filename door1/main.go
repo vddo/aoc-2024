@@ -13,48 +13,60 @@ import (
 	"strings"
 )
 
+const (
+	expectedColumns = 2
+	initialCap      = 100
+)
+
 func importCsvToArray(input string) ([][]int, error) {
-	// Open the file
+	if input == "" {
+		return nil, errors.New("empty input filename")
+	}
+
 	file, error := os.Open(input)
 	if error != nil {
-		log.Fatal(error)
+		return nil, fmt.Errorf("opening file: %w", error)
 	}
 
 	defer file.Close()
 
-	// Create a new CSV Reader
 	reader := csv.NewReader(file)
 	reader.ReuseRecord = true
-
-	// Read the records
-	var csvInput [][]int
+	// Performance: skipp early re-allocations
+	csvInput := make([][]int, 0, initialCap)
+	trackRow := 0
 
 	for {
+		trackRow += 1
 		row, err := reader.Read()
-
 		if err == io.EOF {
 			break
 		}
 
 		if err != nil {
-			log.Fatal(err)
+			return nil, fmt.Errorf("reading CSV rows %d: %w", trackRow, err)
 		}
 
-		row = strings.Fields(row[0])
+		if len(row) != 1 {
+			return nil, fmt.Errorf("reading CSV rows %d: found %d columns; expect 1", trackRow, len(row))
+		}
 
-		rowInts := make([]int, 2)
+		fields := strings.Fields(row[0])
+		if len(fields) != expectedColumns {
+			return nil, fmt.Errorf("extracted CSV rows %d: found %d fields; expect %d", trackRow, len(fields), expectedColumns)
+		}
+		rowValues := make([]int, expectedColumns)
 
-		for ind, val := range row {
-
+		for ind, val := range fields {
 			valInt, err := strconv.Atoi(val)
 			if err != nil {
-				log.Fatal(err)
+				return nil, fmt.Errorf("converting %s in row %d to int: %w", val, trackRow, err)
 			}
 
-			rowInts[ind] = valInt
+			rowValues[ind] = valInt
 		}
 
-		csvInput = append(csvInput, rowInts)
+		csvInput = append(csvInput, rowValues)
 	}
 
 	fmt.Println("CSV file read successfully.")
@@ -63,21 +75,18 @@ func importCsvToArray(input string) ([][]int, error) {
 
 // Take array of arrays with each two elements and split in two arrays with each only one element.
 func splitArrayInTwo(array [][]int) ([]int, []int, error) {
-	if len(array[0]) != 2 {
+	if len(array[0]) != expectedColumns {
 		return nil, nil, errors.New("tupel must consist of two elements")
 	}
-	var array1, array2 []int
-	var res [][]int
+	array1 := make([]int, len(array))
+	array2 := make([]int, len(array))
 
-	for ind := range array {
-		array1 = append(array1, array[ind][0])
-		array2 = append(array2, array[ind][1])
+	for i, pair := range array {
+		array1[i] = pair[0]
+		array2[i] = pair[1]
 	}
 
-	res = append(res, array1)
-	res = append(res, array2)
-
-	return res[0], res[1], nil
+	return array1, array2, nil
 }
 
 func sortSliceOfInts(sliceCoordinates []int) error {
