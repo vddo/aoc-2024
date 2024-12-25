@@ -6,9 +6,15 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"os"
 	"strconv"
 )
+
+type LevelData struct {
+	Levels     []int
+	LineNumber int
+}
 
 // Take a CSV file and return a slice of slices with ints.
 // The inner slices consist of the data and are of different length.
@@ -60,15 +66,62 @@ func importFile(in string) ([][]int, error) {
 	return data, nil
 }
 
+// Checks first condition: levels (numbers) are all either increasing or decreasing
+// Checks second condition: adjacent levels differ max by 3
+func checkConditions(row []int) (bool, error) {
+	if len(row) == 0 {
+		return false, errors.New("row is empty")
+	}
+
+	safe := true
+	increasing, decreasing, safeDiff := 1, 1, 1
+	diff := 0.0
+
+	for i, v := range row {
+		if i == len(row)-1 {
+			break
+		}
+
+		diff = math.Abs(float64(row[i+1] - v))
+		if diff > 3 {
+			safeDiff = 0
+		}
+
+		if v <= row[i+1] {
+			increasing = 0
+		}
+
+		if v >= row[i+1] {
+			decreasing = 0
+		}
+	}
+
+	if (increasing != 1 && decreasing != 1) || safeDiff != 1 {
+		safe = false
+	}
+
+	return safe, nil
+}
+
 func main() {
 	fmt.Println("Start of program door 2")
 
-	// TODO: Import data from file
 	data, err := importFile("input.csv")
 	if err != nil {
 		log.Fatalf("inporting CSV: %v", err)
 	}
-	fmt.Println(data)
 
-	// TODO: For each row check if state is safe
+	countSafe := 0
+	for i, row := range data {
+		safe, e := checkConditions(row)
+		if e != nil {
+			log.Fatalf("processing row %d: %v", i, e)
+		}
+
+		if safe {
+			countSafe += 1
+		}
+	}
+
+	fmt.Printf("Count of safe reports is \n%d\n", countSafe)
 }
