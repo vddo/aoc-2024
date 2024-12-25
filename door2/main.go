@@ -11,15 +11,15 @@ import (
 	"strconv"
 )
 
-type LevelData struct {
-	Levels     []int
-	LineNumber int
+type levelData struct {
+	levels       []int
+	reportNumber int
 }
 
 // Take a CSV file and return a slice of slices with ints.
 // The inner slices consist of the data and are of different length.
 // Converts elements from string to int
-func importFile(in string) ([][]int, error) {
+func importFile(in string) ([]levelData, error) {
 	if in == "" {
 		return nil, errors.New("input file name is empty")
 	}
@@ -35,11 +35,11 @@ func importFile(in string) ([][]int, error) {
 	reader.Comma = ' '
 	reader.FieldsPerRecord = -1
 
-	data := make([][]int, 0, 100)
+	data := make([]levelData, 0, 100)
 	trackedLine := 0
 
 	for {
-		trackedLine += 1
+		trackedLine++
 		record, err := reader.Read()
 		if err == io.EOF {
 			break
@@ -48,50 +48,53 @@ func importFile(in string) ([][]int, error) {
 			return nil, fmt.Errorf("reading record at line %d: %w", trackedLine, err)
 		}
 
-		row := make([]int, 0, 5)
+		row := levelData{
+			levels:       make([]int, 0, 5),
+			reportNumber: trackedLine,
+		}
+
+		if len(record) == 0 {
+			continue
+		}
+
 		for i, v := range record {
 			vConv, e := strconv.Atoi(v)
 			if e != nil {
 				return nil, fmt.Errorf("could not convert element %d in line %d: %w", i, trackedLine, e)
 			}
-			row = append(row, vConv)
+			row.levels = append(row.levels, vConv)
 		}
 
-		if len(row) == 0 {
-			continue
-		}
 		data = append(data, row)
-
 	}
+
 	return data, nil
 }
 
 // Checks first condition: levels (numbers) are all either increasing or decreasing
 // Checks second condition: adjacent levels differ max by 3
-func checkConditions(row []int) (bool, error) {
-	if len(row) == 0 {
-		return false, errors.New("row is empty")
+func checkConditions(row levelData) (bool, error) {
+	if len(row.levels) == 0 {
+		return false, fmt.Errorf("emtpy line %d provided", row.reportNumber)
 	}
 
 	safe := true
 	increasing, decreasing, safeDiff := 1, 1, 1
 	diff := 0.0
+	levels := row.levels
 
-	for i, v := range row {
-		if i == len(row)-1 {
-			break
-		}
+	for i := 0; i < len(levels)-1; i++ {
 
-		diff = math.Abs(float64(row[i+1] - v))
+		diff = math.Abs(float64(levels[i+1] - levels[i]))
 		if diff > 3 {
 			safeDiff = 0
 		}
 
-		if v <= row[i+1] {
+		if levels[i] <= levels[i+1] {
 			increasing = 0
 		}
 
-		if v >= row[i+1] {
+		if levels[i] >= levels[i+1] {
 			decreasing = 0
 		}
 	}
