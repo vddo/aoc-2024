@@ -71,7 +71,7 @@ func parseMul(op string) (*factors, error) {
 	if err != nil {
 		return nil, fmt.Errorf("converting string to integer: %w", err)
 	}
-	m2, err := strconv.Atoi(parsed[0])
+	m2, err := strconv.Atoi(parsed[1])
 	if err != nil {
 		return nil, fmt.Errorf("converting string to integer: %w", err)
 	}
@@ -83,14 +83,6 @@ func parser(input []lines) ([]*factors, error) {
 	collectionFactors := make([]*factors, 0, 20)
 	collectionParsed := make([]string, 0, 20)
 	re := regexp.MustCompile(`mul\(\d+,\d+\)`)
-
-	// HACK:
-	test := "mul(12,12)"
-	test2 := input[0].data
-	pattern := "what()-%*;[mul(826,659)what()&mul(622,241)}^from();why()mul(499,923))"
-	fmt.Println(len(test2))
-	fmt.Println(re.FindString(test))
-	fmt.Println(re.FindAllString(pattern, -1))
 
 	for i := 0; i < len(input); i++ {
 		parsed := re.FindAllString(input[i].data, -1)
@@ -111,6 +103,20 @@ func parser(input []lines) ([]*factors, error) {
 	return collectionFactors, nil
 }
 
+// Calculates all mul-operations and sums up all results
+func calc(data []*factors) (int, error) {
+	if len(data) == 0 {
+		return 0, errors.New("empty data provided")
+	}
+
+	sum := 0
+	for _, mulOperation := range data {
+		sum += mulOperation.multiplicant * mulOperation.multiplier
+	}
+
+	return sum, nil
+}
+
 func main() {
 	fmt.Println("Program door 3 started")
 	data, err := importData("input")
@@ -123,9 +129,6 @@ func main() {
 		log.Fatalf("parsing data: %v", err)
 	}
 
-	// for i := 0; i < len(parsedData); i++ {
-	// 	fmt.Println(parsedData[i])
-	// }
-
-	fmt.Println(len(parsedData))
+	result, _ := calc(parsedData)
+	fmt.Printf("The sum of all mul operations is\n%d\n", result)
 }

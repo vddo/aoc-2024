@@ -85,6 +85,9 @@ func checkConditions(row levelData) (bool, error) {
 
 	for i := 0; i < len(levels)-1; i++ {
 
+		if i == len(levels)-2 {
+			fmt.Println(levels[i+1])
+		}
 		diff = math.Abs(float64(levels[i+1] - levels[i]))
 		if diff > 3 {
 			safeDiff = 0
