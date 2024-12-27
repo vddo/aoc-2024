@@ -15,9 +15,6 @@ func mul(x, y int) int {
 	return x * y
 }
 
-// TODO: Parser:
-// input is a string
-// only valid: "mul(x, y)" with x and y integers
 type lines struct {
 	data       string
 	lineNumber int
