@@ -1,22 +1,20 @@
 package main
 
 import (
-	"door4/arraystack"
+	"door4/importdata"
+	"door4/solver"
 	"fmt"
+	"log"
 )
 
 func main() {
 	fmt.Println("Program door4 starting...")
 
-	a := arraystack.New()
-	a.Push('h')
-	a.Push('i')
-	fmt.Println(a)
-	fmt.Println(a.Pop())
-	fmt.Println(a)
+	data, err := importdata.Import("input")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	fmt.Println(a.Empty())
-	fmt.Println(a.Pop())
-
-	fmt.Println(a.Empty())
+	count, _ := solver.Solve(data)
+	fmt.Println(count)
 }
