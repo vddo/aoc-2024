@@ -2,6 +2,7 @@ package solver
 
 import (
 	"door4/arraystack"
+	"fmt"
 	"strings"
 )
 
@@ -32,6 +33,44 @@ func nextLetter(letter byte) byte {
 // Check if indices are in bound of data
 func inBound(m int, n int) bool {
 	return m >= 0 && m < bound.rows && n >= 0 && n < bound.columns
+}
+
+// Render KEYWORD and dots.
+func render(res *arraystack.ArrayStack) {
+	grid := make([][]byte, bound.rows)
+	for i := range grid {
+		grid[i] = make([]byte, bound.columns)
+	}
+
+	for i := 0; i < bound.rows; i++ {
+		for j := 0; j < bound.columns; j++ {
+			grid[i][j] = 32
+		}
+	}
+
+	for !res.Empty() {
+		backtraceNodeParent(res.Pop(), &grid)
+	}
+
+	for i := range grid {
+		printOneRow(&grid[i])
+	}
+}
+
+// Recursivly evaluate coordinates and value of parent node
+func backtraceNodeParent(node *arraystack.Node, grid *[][]byte) {
+	if node.Parent != nil {
+		backtraceNodeParent(node.Parent, grid)
+	}
+
+	(*grid)[node.I][node.J] = node.Val
+}
+
+func printOneRow(row *[]byte) {
+	for i := range *row {
+		fmt.Printf("%c", (*row)[i])
+	}
+	fmt.Println("")
 }
 
 func Solve(data *[]string) (int, error) {
@@ -96,6 +135,8 @@ func Solve(data *[]string) (int, error) {
 			}
 		}
 	}
+
+	render(&result)
 
 	return countKeyword, nil
 }
