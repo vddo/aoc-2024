@@ -10,14 +10,26 @@ const (
 	KEYWORD string = "XMAS"
 )
 
-var bound struct {
-	rows    int
-	columns int
+type GridPoint struct {
+	X, Y  int
+	Value byte
+}
+
+type Solver struct {
+	Data                        *[]string
+	SearchStack                 arraystack.ArrayStack
+	Result                      []GridPoint
+	Keyword                     string
+	KeywordCount, Rows, Columns int
+}
+
+func NewSolver(data *[]string, keyword string, rows int, columns int) *Solver {
+	return &Solver{Data: data, Keyword: keyword, Rows: rows, Columns: columns}
 }
 
 // Checks if the argument is the first letter of the KEYWORD.
 // Sensitive to capital letters.
-func beginning(letter byte) bool {
+func isFirstLetter(letter byte) bool {
 	return letter == KEYWORD[0]
 }
 
@@ -30,26 +42,26 @@ func nextLetter(letter byte) byte {
 	return 0
 }
 
-// Check if indices are in bound of data
-func inBound(m int, n int) bool {
-	return m >= 0 && m < bound.rows && n >= 0 && n < bound.columns
+// Check if indices are in gridBound of data
+func (s Solver) inBound(m int, n int) bool {
+	return m >= 0 && m < s.Rows && n >= 0 && n < s.Columns
 }
 
 // Render KEYWORD and dots.
-func render(res *arraystack.ArrayStack) {
-	grid := make([][]byte, bound.rows)
+func (s *Solver) Render() {
+	grid := make([][]byte, s.Rows)
 	for i := range grid {
-		grid[i] = make([]byte, bound.columns)
+		grid[i] = make([]byte, s.Columns)
 	}
 
-	for i := 0; i < bound.rows; i++ {
-		for j := 0; j < bound.columns; j++ {
+	for i := 0; i < s.Rows; i++ {
+		for j := 0; j < s.Columns; j++ {
 			grid[i][j] = 32
 		}
 	}
 
-	for !res.Empty() {
-		backtraceNodeParent(res.Pop(), &grid)
+	for _, point := range s.Result {
+		grid[point.X][point.Y] = point.Value
 	}
 
 	for i := range grid {
@@ -58,12 +70,12 @@ func render(res *arraystack.ArrayStack) {
 }
 
 // Recursivly evaluate coordinates and value of parent node
-func backtraceNodeParent(node *arraystack.Node, grid *[][]byte) {
+func getPath(node *arraystack.Node, list *[]GridPoint) {
 	if node.Parent != nil {
-		backtraceNodeParent(node.Parent, grid)
+		getPath(node.Parent, list)
 	}
 
-	(*grid)[node.I][node.J] = node.Val
+	*list = append(*list, GridPoint{node.I, node.J, node.Val})
 }
 
 func printOneRow(row *[]byte) {
@@ -73,37 +85,33 @@ func printOneRow(row *[]byte) {
 	fmt.Println("")
 }
 
-func Solve(data *[]string) (int, error) {
-	stack, result := arraystack.ArrayStack{}, arraystack.ArrayStack{}
-
-	countKeyword := 0
-	bound.rows, bound.columns = len(*data), len((*data)[0])
-	for i := 0; i < bound.rows; i++ {
-		for j := 0; j < bound.columns; j++ {
-			value := (*data)[i][j]
-			if beginning(value) {
-				stack.Push(&arraystack.Node{Val: value, I: i, J: j})
+func (s *Solver) Solve() error {
+	for i := 0; i < s.Rows; i++ {
+		for j := 0; j < s.Columns; j++ {
+			value := (*s.Data)[i][j]
+			if isFirstLetter(value) {
+				s.SearchStack.Push(&arraystack.Node{Val: value, I: i, J: j})
 			}
 
-			for !stack.Empty() {
-				node := *(stack.Pop())
+			for !s.SearchStack.Empty() {
+				node := *(s.SearchStack.Pop())
 				next := nextLetter(node.Val)
 				node_i, node_j := node.I, node.J
 
 				if next == 0 {
-					result.Push(&node)
-					countKeyword++
+					getPath(&node, &s.Result)
+					s.KeywordCount++
 					continue
 				}
 
 				if node.Direction != nil {
 					m, n := node_i+node.Direction.V_x, node_j+node.Direction.V_y
-					if !inBound(m, n) {
+					if !s.inBound(m, n) {
 						continue
 					}
 
-					if neighbor := (*data)[m][n]; neighbor == next {
-						stack.Push(&arraystack.Node{
+					if neighbor := (*s.Data)[m][n]; neighbor == next {
+						s.SearchStack.Push(&arraystack.Node{
 							Val:       neighbor,
 							I:         m,
 							J:         n,
@@ -117,12 +125,12 @@ func Solve(data *[]string) (int, error) {
 				for g := 0; g < 3; g++ {
 					for h := 0; h < 3; h++ {
 						m, n := node_i-1+g, node_j-1+h
-						if !inBound(m, n) {
+						if !s.inBound(m, n) {
 							continue
 						}
 
-						if neighbor := (*data)[m][n]; neighbor == next {
-							stack.Push(&arraystack.Node{
+						if neighbor := (*s.Data)[m][n]; neighbor == next {
+							s.SearchStack.Push(&arraystack.Node{
 								Val:       neighbor,
 								I:         m,
 								J:         n,
@@ -136,7 +144,5 @@ func Solve(data *[]string) (int, error) {
 		}
 	}
 
-	render(&result)
-
-	return countKeyword, nil
+	return nil
 }
