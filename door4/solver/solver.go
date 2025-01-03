@@ -8,6 +8,7 @@ import (
 
 const (
 	KEYWORD string = "XMAS"
+	SPACE   byte   = 32
 )
 
 type GridPoint struct {
@@ -43,7 +44,7 @@ func nextLetter(letter byte) byte {
 }
 
 // Check if indices are in gridBound of data
-func (s Solver) inBound(m int, n int) bool {
+func (s *Solver) inBound(m int, n int) bool {
 	return m >= 0 && m < s.Rows && n >= 0 && n < s.Columns
 }
 
@@ -56,7 +57,7 @@ func (s *Solver) Render() {
 
 	for i := 0; i < s.Rows; i++ {
 		for j := 0; j < s.Columns; j++ {
-			grid[i][j] = 32
+			grid[i][j] = SPACE
 		}
 	}
 
