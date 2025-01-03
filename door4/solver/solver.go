@@ -4,6 +4,7 @@ import (
 	"door4/arraystack"
 	"fmt"
 	"strings"
+	"sync"
 )
 
 const (
@@ -24,8 +25,27 @@ type Solver struct {
 	KeywordCount, Rows, Columns int
 }
 
+type DirectionCache struct {
+	Directions []*arraystack.Vec
+	Once       sync.Once
+}
+
+var GlobalDirectionCache *DirectionCache = &DirectionCache{}
+
 func NewSolver(data *[]string, keyword string, rows int, columns int) *Solver {
 	return &Solver{Data: data, Keyword: keyword, Rows: rows, Columns: columns}
+}
+
+func (dc *DirectionCache) GetDirections() {
+	dc.Once.Do(func() {
+		for i := -1; i <= 1; i++ {
+			for j := -1; j <= 1; j++ {
+				if i != 0 || j != 0 {
+					dc.Directions = append(dc.Directions, &arraystack.Vec{X: i, Y: j})
+				}
+			}
+		}
+	})
 }
 
 // Checks if the argument is the first letter of the KEYWORD.
@@ -76,7 +96,7 @@ func getPath(node *arraystack.Node, list *[]GridPoint) {
 		getPath(node.Parent, list)
 	}
 
-	*list = append(*list, GridPoint{node.I, node.J, node.Val})
+	*list = append(*list, GridPoint{node.X, node.Y, node.Val})
 }
 
 func printOneRow(row *[]byte) {
@@ -87,17 +107,18 @@ func printOneRow(row *[]byte) {
 }
 
 func (s *Solver) Solve() error {
+	GlobalDirectionCache.GetDirections()
+
 	for i := 0; i < s.Rows; i++ {
 		for j := 0; j < s.Columns; j++ {
 			value := (*s.Data)[i][j]
 			if isFirstLetter(value) {
-				s.SearchStack.Push(&arraystack.Node{Val: value, I: i, J: j})
+				s.SearchStack.Push(&arraystack.Node{Val: value, X: i, Y: j})
 			}
 
 			for !s.SearchStack.Empty() {
 				node := *(s.SearchStack.Pop())
 				next := nextLetter(node.Val)
-				node_i, node_j := node.I, node.J
 
 				if next == 0 {
 					getPath(&node, &s.Result)
@@ -106,7 +127,7 @@ func (s *Solver) Solve() error {
 				}
 
 				if node.Direction != nil {
-					m, n := node_i+node.Direction.V_x, node_j+node.Direction.V_y
+					m, n := node.X+node.Direction.X, node.Y+node.Direction.Y
 					if !s.inBound(m, n) {
 						continue
 					}
@@ -114,8 +135,8 @@ func (s *Solver) Solve() error {
 					if neighbor := (*s.Data)[m][n]; neighbor == next {
 						s.SearchStack.Push(&arraystack.Node{
 							Val:       neighbor,
-							I:         m,
-							J:         n,
+							X:         m,
+							Y:         n,
 							Parent:    &node,
 							Direction: node.Direction,
 						})
@@ -123,24 +144,23 @@ func (s *Solver) Solve() error {
 					continue
 				}
 
-				for g := 0; g < 3; g++ {
-					for h := 0; h < 3; h++ {
-						m, n := node_i-1+g, node_j-1+h
-						if !s.inBound(m, n) {
-							continue
-						}
+				for _, d := range GlobalDirectionCache.Directions {
+					m, n := node.X+d.X, node.Y+d.Y
+					if !s.inBound(m, n) {
+						continue
+					}
 
-						if neighbor := (*s.Data)[m][n]; neighbor == next {
-							s.SearchStack.Push(&arraystack.Node{
-								Val:       neighbor,
-								I:         m,
-								J:         n,
-								Parent:    &node,
-								Direction: &arraystack.Vec{V_x: m - node_i, V_y: n - node_j},
-							})
-						}
+					if neighbor := (*s.Data)[m][n]; neighbor == next {
+						s.SearchStack.Push(&arraystack.Node{
+							Val:       neighbor,
+							X:         m,
+							Y:         n,
+							Parent:    &node,
+							Direction: &arraystack.Vec{X: m - node.X, Y: n - node.Y},
+						})
 					}
 				}
+
 			}
 		}
 	}
