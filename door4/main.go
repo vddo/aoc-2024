@@ -7,6 +7,8 @@ import (
 	"log"
 )
 
+var s solver.GridSolver
+
 func main() {
 	fmt.Println("Program door4 starting...")
 
@@ -15,7 +17,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	s := solver.NewSolver(data, solver.KEYWORD, len(*data), len((*data)[0]))
+	s = solver.NewSolver(data, solver.KEYWORD, len(*data), len((*data)[0]))
 	s_err := s.Solve()
 	if err != nil {
 		log.Fatalf("Not able to solve this input: %v", s_err)
