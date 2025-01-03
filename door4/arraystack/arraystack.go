@@ -4,37 +4,35 @@ type ArrayStack []*Node
 
 type Node struct {
 	Val       byte
-	I         int
-	J         int
+	X, Y      int
 	Parent    *Node
 	Direction *Vec
 }
 
 type Vec struct {
-	V_x int
-	V_y int
+	X, Y int
 }
 
 func New() *ArrayStack {
 	return &ArrayStack{}
 }
 
-func (s *ArrayStack) Push(x *Node) {
-	*s = append(*s, x)
+func (as *ArrayStack) Push(x *Node) {
+	*as = append(*as, x)
 }
 
-func (s *ArrayStack) Pop() *Node {
-	length := len(*s)
+func (as *ArrayStack) Pop() *Node {
+	length := len(*as)
 	if length == 0 {
 		return nil
 	}
 
-	n := (*s)[length-1]
-	*s = (*s)[:length-1]
+	n := (*as)[length-1]
+	*as = (*as)[:length-1]
 
 	return n
 }
 
-func (s *ArrayStack) Empty() bool {
-	return len(*s) == 0
+func (as *ArrayStack) Empty() bool {
+	return len(*as) == 0
 }

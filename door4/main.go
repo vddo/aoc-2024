@@ -12,7 +12,7 @@ var s solver.GridSolver
 func main() {
 	fmt.Println("Program door4 starting...")
 
-	data, err := importdata.Import("input-small")
+	data, err := importdata.Import("input")
 	if err != nil {
 		log.Fatal(err)
 	}
