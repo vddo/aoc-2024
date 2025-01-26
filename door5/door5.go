@@ -13,13 +13,20 @@ type (
 )
 
 func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("Usage: go run door5.go [input.file]")
+		return
+	}
+
 	fmt.Println("Solving door 5...")
+
+	input := os.Args[1]
 
 	// Buffer for rules and logs
 	bufRules := make([]rowRuleData, 0, 100)
 	bufLogs := make([]rowLogData, 0, 20)
 
-	f, err := os.Open("data/small.txt")
+	f, err := os.Open(input)
 	if err != nil {
 		log.Fatal(err)
 	}
